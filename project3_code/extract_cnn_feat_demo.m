@@ -1,7 +1,7 @@
 clear all;
 
 % TODO: Edit this to point to the folder your caffe mex file is in.
-path_to_matcaffe = '/data/jkrause/cs231b/caffe-rc2/matlab/caffe';
+path_to_matcaffe = '/afs/ir.stanford.edu/users/d/y/dylanr/cs231b/caffe-rc2/matlab/caffe';
 addpath(path_to_matcaffe)
 
 
@@ -57,3 +57,5 @@ caffe('set_mode_gpu');
 f = caffe('forward', {ims});
 % Convert the features to (num. dims) x (num. regions)
 feat = single(reshape(f{1}(:), [], size(ims, 4)));
+x = 2;
+
