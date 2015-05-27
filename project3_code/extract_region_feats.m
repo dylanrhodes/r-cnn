@@ -7,9 +7,9 @@ MARGIN = 16;
 BATCH_SIZE = 100;
 CODE_LENGTH = 512;
 
-init_key = caffe('init', 'cnn_deploy.prototxt', 'cnn512.caffemodel', 'test');
-caffe('set_device', 0);
-caffe('set_mode_gpu');
+%init_key = caffe('init', 'cnn_deploy.prototxt', 'cnn512.caffemodel', 'test');
+%caffe('set_device', 4);
+%caffe('set_mode_gpu');
 
 for s = 1:numel(splits)
   split = splits{s};
