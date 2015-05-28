@@ -33,7 +33,7 @@ for s = 1:numel(splits)
   for i = 1:numel(images)
       out_file = ['../features/' images(i).fname(1:size(images(i).fname, 2) - 4) '.bin'];
       
-      if exist(out_file, 'file')
+      if exist(out_file, 'file') || mod(i, 3) ~= 0
           fprintf('Skipping %s...\n', out_file);
           continue
       else
