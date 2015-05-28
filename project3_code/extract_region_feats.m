@@ -8,7 +8,7 @@ BATCH_SIZE = 100;
 CODE_LENGTH = 512;
 
 init_key = caffe('init', 'cnn_deploy.prototxt', 'cnn512.caffemodel', 'test');
-caffe('set_device', 4);
+caffe('set_device', 0);
 caffe('set_mode_gpu');
 
 for s = 1:numel(splits)
@@ -85,7 +85,7 @@ for s = 1:numel(splits)
           all_codes(s_idx:e_idx, :) = feat(:,1:batch_len)';
       end
       
-      fwrite(out_file, all_codes, 'single');
+      fwrite(fopen(out_file, 'w'), all_codes, 'single');
       fprintf('Wrote data file (%d/%d) to %s...\n', i, numel(images), out_file);
       toc
   end
