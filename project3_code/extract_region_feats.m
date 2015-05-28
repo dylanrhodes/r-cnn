@@ -1,6 +1,6 @@
 function extract_region_feats()
 
-splits = {'train', 'test'};
+splits = {'test', 'train'};
 
 CROP_SIZE = 227;
 MARGIN = 16;
@@ -86,7 +86,7 @@ for s = 1:numel(splits)
       end
       
       fwrite(out_file, all_codes, 'single');
-      fprintf('Wrote data file to %s...\n', out_file);
+      fprintf('Wrote data file (%d/%d) to %s...\n', i, numel(images), out_file);
       toc
   end
 end
