@@ -7,9 +7,9 @@ MARGIN = 16;
 BATCH_SIZE = 100;
 CODE_LENGTH = 512;
 
-%init_key = caffe('init', 'cnn_deploy.prototxt', 'cnn512.caffemodel', 'test');
-%caffe('set_device', 4);
-%caffe('set_mode_gpu');
+init_key = caffe('init', 'cnn_deploy.prototxt', 'cnn512.caffemodel', 'test');
+caffe('set_device', 4);
+caffe('set_mode_gpu');
 
 for s = 1:numel(splits)
   split = splits{s};
@@ -31,11 +31,37 @@ for s = 1:numel(splits)
   image_mean = image_mean(off: off + CROP_SIZE - 1, off: off + CROP_SIZE - 1, :);
   
   for i = 1:numel(images)
+      out_file = ['../features/' images(i).fname(1:size(images(i).fname, 2) - 4) '.bin'];
+      
+      if exist(out_file, 'file')
+          fprintf('Skipping %s...\n', out_file);
+          continue
+      else
+          fprintf('Collecting features for %s...\n', out_file);
+          tic
+      end
+      
       im = imread(['../images/' images(i).fname]);
-      im = single(im(:, :, [3 2 1]));    
-      im = padarray(im, [MARGIN MARGIN 0], -1000);
+      im = single(im(:, :, [3 2 1]));
       
       all_box = [images(i).bboxes; ssearch_boxes{i}];
+      
+      % Dilate bounding boxes
+      width = all_box(:, 3) - all_box(:, 1);
+      height = all_box(:, 4) - all_box(:, 2);
+      width_pad = ceil(width * (MARGIN / CROP_SIZE / 2));
+      height_pad = ceil(height * (MARGIN / CROP_SIZE / 2));
+      
+      all_box(:, 1) = all_box(:, 1) - width_pad;
+      all_box(:, 3) = all_box(:, 3) + width_pad;
+      all_box(:, 2) = all_box(:, 2) - height_pad;
+      all_box(:, 4) = all_box(:, 4) + height_pad;
+      
+      % Pad image with large negative number
+      max_pad = max([max(width_pad) max(height_pad)]);
+      im = padarray(im, [max_pad max_pad 0], -1000);
+      all_box = all_box + max_pad;
+      
       all_codes = zeros(size(all_box, 1), CODE_LENGTH);
       
       for j = 1:ceil(size(all_box, 1) / BATCH_SIZE)
@@ -43,9 +69,7 @@ for s = 1:numel(splits)
           e_idx = min(j * BATCH_SIZE, size(all_box, 1));
           batch_len = e_idx - s_idx + 1;
           
-          boxes = floor(all_box(s_idx:e_idx, :));
-          boxes(:, 3:4) = boxes(:, 3:4) + (MARGIN * 2);
-      
+          boxes = floor(all_box(s_idx:e_idx, :));      
           regions = zeros(CROP_SIZE, CROP_SIZE, 3, BATCH_SIZE, 'single');
           
           for k = 1:batch_len
@@ -61,6 +85,8 @@ for s = 1:numel(splits)
           all_codes(s_idx:e_idx, :) = feat(:,1:batch_len)';
       end
       
-      dlmwrite(['../features/' images(i).fname(1:size(images(i).fname, 2) - 4) '.mat'], all_codes);
+      fwrite(out_file, all_codes, 'single');
+      fprintf('Wrote data file to %s...\n', out_file);
+      toc
   end
 end
