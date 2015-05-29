@@ -14,19 +14,51 @@ function train_rcnn()
 % -Should you use a bias?
 % -What type of SVM solver/formulation should you use?
 
-all_positives = get_positive_features();
+DIFFICULT_THRESHOLD = 0.9;
+RETRAIN_THRESHOLD = 10000;
+
+all_pos = get_positive_features();
+
+im_data = load('train_ims.mat');
+images = im_data.images;
 
 models = cell(NUM_CLASSES, 1);
 
 for class = 1:NUM_CLASSES,
-    pos = all_positives{class};
-    neg = sample_neg_features(class, 1000);
-    
+    pos = all_pos{class};
     model = models{class};
     
-    if model == 3 % Is new model
-        % Train on things
-    else
-        % Score neg, retrain on highest scores
+    for img_idx = 1:numel(images)
+        neg = get_negative_features(images(i).fname, i, class);
+        hard_neg = [];
+        
+        if model == 'none' % Is new model
+            labels = [ones([size(pos, 1) 1]); zeros([size(neg, 1) 1])];
+            data = [pos; neg];
+            
+            model = svmtrain(data, labels);
+            models{class} = model;
+        else
+            pred = svmclassify(model, neg);
+            
+            if size(hard_neg, 1) == 1
+                hard_neg = neg(pred == 1, :);
+            else
+                hard_neg = [hard_neg; neg(pred == 1, :)];
+            end
+        end
+        
+        if size(hard_neg, 1) > RETRAIN_THRESHOLD
+            labels = [ones([size(pos, 1) 1]); zeros([size(hard_neg, 1) 1])];
+            data = [pos; hard_neg];
+            
+            model = svmtrain(data, labels);
+            models{class} = model;
+            
+            pred = svmclassify(model, hard_neg);
+            hard_neg = hard_neg(pred == 1, :);
+        end
     end
+    
 end
+

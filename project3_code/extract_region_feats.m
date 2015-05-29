@@ -85,8 +85,9 @@ for s = 1:numel(splits)
           all_codes(s_idx:e_idx, :) = feat(:,1:batch_len)';
       end
       
-      fwrite(fopen(out_file, 'w'), all_codes, 'single');
-      fclose('all');
+      file_id = fopen(out_file, 'w');
+      fwrite(file_id, all_codes, 'single');
+      fclose(file_id);
       
       fprintf('Wrote data file (%d/%d) to %s...\n', i, numel(images), out_file);
       toc
