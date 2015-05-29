@@ -86,6 +86,8 @@ for s = 1:numel(splits)
       end
       
       fwrite(fopen(out_file, 'w'), all_codes, 'single');
+      fclose('all');
+      
       fprintf('Wrote data file (%d/%d) to %s...\n', i, numel(images), out_file);
       toc
   end
