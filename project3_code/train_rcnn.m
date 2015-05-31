@@ -14,7 +14,7 @@ function [models] = train_rcnn()
 % -Should you use a bias?
 % -What type of SVM solver/formulation should you use?
 
-HARD_THRESH = 2.0;
+HARD_THRESH = 1.0;
 RETRAIN_THRESHOLD = 2500;
 NUM_CLASSES = 1;
 
@@ -31,7 +31,7 @@ for class = 1:NUM_CLASSES,
     model = models{class};
     neg_acc = [];
     
-    for img_idx = 1:50 %numel(images)
+    for img_idx = 1:numel(images)
         fprintf('Processing negatives from %d/%d ...\n', img_idx, numel(images));
         neg = get_negative_features(images(img_idx), img_idx, class);
         
@@ -41,20 +41,20 @@ for class = 1:NUM_CLASSES,
             models{class} = model;
         end
         
-        [pred, scores] = predict(model.svm, neg);
-        neg_acc = [neg_acc (1-(sum(pred) / size(pred, 1)))];
+        [pred, acc, scores] = predict(zeros(size(neg, 1), 1), sparse(neg), model.svm);
+        neg_acc = [neg_acc acc];
 
         if size(hard_neg, 1) == 1
             hard_neg = neg(scores(:, 1) < HARD_THRESH, :);
         else
-            hard_neg = [hard_neg; neg(pred == 1, :)];
+            hard_neg = [hard_neg; neg(scores(:, 1) < HARD_THRESH, :)];
         end
         
         if size(hard_neg, 1) > RETRAIN_THRESHOLD
             model = train_svm(pos, hard_neg);
             models{class} = model;
             
-            [pred, scores] = predict(model.svm, hard_neg);
+            [pred, acc, scores] = predict(zeros(size(hard_neg, 1), 1), sparse(hard_neg), model.svm);
             hard_neg = hard_neg(scores(:, 1) < HARD_THRESH, :);
             fprintf('Retaining %d hard negatives...\n', size(hard_neg, 1));
         end

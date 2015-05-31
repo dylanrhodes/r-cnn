@@ -6,7 +6,7 @@ function test_rcnn()
 % Save and evaluate your predictions.
 
 NUM_CLASSES = 1;
-DETECTION_THRESH = 5;
+DETECTION_THRESH = 0.0;
 
 im_data = load('test_ims.mat');
 images = im_data.images;
@@ -25,10 +25,10 @@ for img_idx = 1:numel(images)
     boxes = ssearch_boxes{img_idx};
     
     for class = 1:NUM_CLASSES
-        [pred, score] = predict(models{class}.svm, feat);
+        [pred, acc, score] = predict(zeros(size(feat, 1), 1), sparse(feat), models{class}.svm);
         
-        pred_boxes = boxes(score(:,2) > DETECTION_THRESH, :);
-        pred_scores = score(score(:,2) > DETECTION_THRESH, 2);
+        pred_boxes = boxes(score < DETECTION_THRESH, :);
+        pred_scores = score(score < DETECTION_THRESH, :);
         
         [pred_boxes, pred_scores] = non_max_suppression(pred_boxes, pred_scores);
         % TODO: ridge regression for bboxes
