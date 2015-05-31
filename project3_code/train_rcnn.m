@@ -1,4 +1,4 @@
-function train_rcnn()
+function [models] = train_rcnn()
 
 % TODO
 % Train the R-CNN based on your extracted features
@@ -14,8 +14,9 @@ function train_rcnn()
 % -Should you use a bias?
 % -What type of SVM solver/formulation should you use?
 
-DIFFICULT_THRESHOLD = 0.9;
-RETRAIN_THRESHOLD = 10000;
+HARD_THRESH = 1.0;
+RETRAIN_THRESHOLD = 2500;
+NUM_CLASSES = 3;
 
 all_pos = get_positive_features();
 
@@ -26,39 +27,40 @@ models = cell(NUM_CLASSES, 1);
 
 for class = 1:NUM_CLASSES,
     pos = all_pos{class};
+    hard_neg = [];
     model = models{class};
+    neg_acc = [];
     
-    for img_idx = 1:numel(images)
-        neg = get_negative_features(images(i).fname, i, class);
-        hard_neg = [];
+    for img_idx = 1:50 %numel(images)
+        fprintf('Processing negatives from %d/%d ...\n', img_idx, numel(images));
+        neg = get_negative_features(images(img_idx), img_idx, class);
         
-        if model == 'none' % Is new model
-            labels = [ones([size(pos, 1) 1]); zeros([size(neg, 1) 1])];
-            data = [pos; neg];
-            
-            model = svmtrain(data, labels);
+        % Initialize new model
+        if isempty(model)
+            model = train_svm(pos, neg);
             models{class} = model;
+        end
+        
+        pred = predict(model, neg);
+        neg_acc = [neg_acc (1-(sum(pred) / size(pred, 1)))];
+
+        if size(hard_neg, 1) == 1
+            hard_neg = neg(pred == 1, :);
         else
-            pred = svmclassify(model, neg);
-            
-            if size(hard_neg, 1) == 1
-                hard_neg = neg(pred == 1, :);
-            else
-                hard_neg = [hard_neg; neg(pred == 1, :)];
-            end
+            hard_neg = [hard_neg; neg(pred == 1, :)];
         end
         
         if size(hard_neg, 1) > RETRAIN_THRESHOLD
-            labels = [ones([size(pos, 1) 1]); zeros([size(hard_neg, 1) 1])];
-            data = [pos; hard_neg];
-            
-            model = svmtrain(data, labels);
+            model = train_svm(pos, hard_neg);
             models{class} = model;
             
-            pred = svmclassify(model, hard_neg);
-            hard_neg = hard_neg(pred == 1, :);
+            [pred, scores] = predict(model, hard_neg);
+            hard_neg = hard_neg(scores(:, 1) < HARD_THRESH, :);
+            fprintf('Retaining %d hard negatives...\n', size(hard_neg, 1));
         end
     end
+    
+    plot(neg_acc);
     
 end
 

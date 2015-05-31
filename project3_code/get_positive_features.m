@@ -7,13 +7,20 @@ images = im_data.images;
 output = cell(3, 1);
 
 for i = 1:numel(images)
-    fname = ['../features/' images(i).fname(1:size(images(i).fname, 2) - 4) '.mat']
+    fname = ['../features/' images(i).fname(1:size(images(i).fname, 2) - 4) '.bin'];
+    
+    if ~exist(fname, 'file');
+        continue
+    end
+    
     in_file = fopen(fname, 'r');
     cnn_feat = fread(in_file, 'single');
+    num_rows = size(cnn_feat, 1) / 512;
+    cnn_feat = reshape(cnn_feat, [num_rows 512]);
     fclose(in_file);
     
     for j = 1:size(images(i).classes, 2)
-        class = images(i).classes(1, j)
+        class = images(i).classes(1, j);
         
         if size(output{class}, 2) == 1
             output{class} = cnn_feat(j, :);
