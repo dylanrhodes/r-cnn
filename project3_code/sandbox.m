@@ -21,7 +21,8 @@ for w = 1:length(weights)
     end
 end
 
-disp(results);
+celldisp(results);
+celldisp(mean_results);
 
 end
 
