@@ -12,6 +12,7 @@ function [models] = train_rcnn(hyp)
 rng(183927481);
 
 HARD_THRESH = 1.0;
+
 RETRAIN_THRESHOLD = 1500;
 NUM_CLASSES = 3;
 

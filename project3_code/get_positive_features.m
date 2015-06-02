@@ -6,7 +6,7 @@ images = im_data.images;
 
 output = cell(3, 1);
 
-for i = 1:numel(images)
+for i = 1:500 %numel(images)
     fname = ['../features/' images(i).fname(1:size(images(i).fname, 2) - 4) '.bin'];
     
     if ~exist(fname, 'file');

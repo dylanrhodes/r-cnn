@@ -2,8 +2,8 @@ function sandbox()
 % This function trains and evaluates RCNN's with different hyperparameters
 % on a validation set (the last third of the training images)
 
-weights = [2 5 10 20];
-costs = [1e-2 1e-3 1e-4 1e-5];
+weights = [5 10];
+costs = [1e-2 1e-3 1e-4];
 biases = [1 10];
 
 results = cell(length(weights), length(costs), length(biases));
