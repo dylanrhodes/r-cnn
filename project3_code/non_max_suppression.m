@@ -2,6 +2,7 @@ function [boxes, scores] = non_max_suppression(boxes, scores)
 % Perform non-max suppression
 
 OVERLAP_THRESH = 0.3;
+scores = abs(scores);
 
 [scores, idxs] = sort(scores, 'descend');
 boxes = boxes(idxs, :);
